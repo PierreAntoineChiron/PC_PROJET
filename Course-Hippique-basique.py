@@ -145,9 +145,24 @@ def prise_en_compte_signaux(signum, frame) :
     en_couleur(CL_WHITE)
     print("Fini")
     sys.exit(0)
+
+def prediction():
+    try :
+        predi = int(input("Veuillez prédire un gagnant (entrer un nombre entre 0 et 19): "))
+        if predi <= 19 and predi >= 0:
+            print("Bonne chance")
+            return(predi)
+        else:
+            print("Un nombre, c'est bien, mais il est trop grand ou trop petit :( ")
+            prediction()
+    except :
+        print("vous n'avez pas rentré un nombre, vous n'avez donc pas fait de prédiction")
+        prediction()
 # ---------------------------------------------------
 # La partie principale :
 if __name__ == "__main__" :
+    predi = prediction()
+
     Nb_process = 20
     lock = mp.Semaphore(1)
     tab=mp.Array('i', Nb_process)
