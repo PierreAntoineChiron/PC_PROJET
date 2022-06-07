@@ -51,142 +51,170 @@ def move_to(lig, col) : print("\033[" + str(lig) + ";" + str(col) + "f",end='')
 
 def en_couleur(Coul) : print(Coul,end='')
 
-def client(nombre_commande2):
+cpt = 0
+cmd = 0
 
-    if nombre_commande2!=0:
-        x = random.randint(1,10)
-        a = random.randint(0,25)
-        i=0
-        while x!=0 and a!=0 :
-            lock.acquire()
-            if commande[i]==0 :
-                commande[i]=x
-                nom_commande[i]=a
-                x=0
-                a=0
-            lock.release()
-            if i==49:
-                i=-1
-            i+=1
-        attente = random.randint(1,2)
-        #time.sleep(attente)
-        client(nombre_commande2-1)
-    else :
-        fin_de_journee.value=1
+def client(nombre_commande2):
+    while nombre_commande2!=0 :
+        if nombre_commande2!=0:
+            x = random.randint(1,10)
+            a = random.randint(0,25)
+            i=0
+            while x!=0 or a!=0 :
+                lock.acquire()
+                if commande[i]==0 :
+                    nombre_commande_demande.value+=1
+                    commande[i]=x
+                    nom_commande[i]=a
+                    x=0
+                    a=0
+                lock.release()
+                if i==49:
+                    i=-1
+                i+=1
+            attente = random.randint(1,2)
+            #time.sleep(attente)
+            #client(nombre_commande2-1)
+            nombre_commande2-=1
+
+    fin_de_journee.value=1
+    tous_le_monde_a_fini_sema.acquire()
+    tous_le_monde_a_fini.value+=1
+    tous_le_monde_a_fini_sema.release()
+        
 
 def serveur(numero,numero2,locker):
-    if fin_de_journee.value == 0 or nombre_commande_servis.value <11:
-        x=0
-        a=0
-        i=0
-        while x==0 and a==0 :
-            lock.acquire()
-            if commande[i]!=0:
-                x=commande[i]
-                a=nom_commande[i]
-                commande[i]=0
-                nom_commande[i]=0
-            lock.release()
-            if i==49 :
-                if fin_de_journee.value!=0 and nombre_commande_servis.value > 10:
-                    break
-                i=-1
-            i+=1
-        numero[0]=a
-        numero[1]=x
-        time.sleep(random.randint(1,5))
-        locker.acquire()
-        numero2[0]=a
-        numero2[1]=x
-        locker.release()
-        numero[0]=0
-        numero[1]=0
+    while fin_de_journee.value == 0 or nombre_commande_servis.value <nombre_commande_voulu.value :
+        time.sleep(1)
+        if fin_de_journee.value == 0 or nombre_commande_servis.value <nombre_commande_voulu.value:
+            x=0
+            a=0
+            i=0
+            while x==0 and a==0 :
+                lock.acquire()
+                if commande[i]!=0:
+                    x=commande[i]
+                    a=nom_commande[i]
+                    commande[i]=0
+                    nom_commande[i]=0
+                lock.release()
+                if i==49 :
+                    if fin_de_journee.value!=0 and nombre_commande_servis.value > nombre_commande_voulu.value-1:
+                        break
+                    i=-1
+                i+=1
+            numero[0]=a
+            numero[1]=x
+            time.sleep(random.randint(1,5))
+            locker.acquire()
+            numero2[0]=a
+            numero2[1]=x
+            locker.release()
+            numero[0]=0
+            numero[1]=0
 
-        if fin_de_journee.value == 0 or nombre_commande_servis.value <11:
-            serveur(numero,numero2,locker)
+    tous_le_monde_a_fini_sema.acquire()
+    tous_le_monde_a_fini.value+=1
+    tous_le_monde_a_fini_sema.release()
 
 
 def major_dHomme(serveur,pret_lock,pret):
     #print("je me lance")
+    while fin_de_journee.value==0 or nombre_commande_servis.value <nombre_commande_voulu.value or tous_le_monde_a_fini.value!=5 or verif.value!=1:
+        lock.acquire()
+        #print("j'ai attraper le lock")
+        attente=[]
+        attente2=[]
 
-    for i in  range(len(serveur)) :
-        if serveur[i][0]!=0:
-            move_to(i+1,0)         # pour effacer toute ma ligne
-            erase_line_from_beg_to_curs()
-            en_couleur(lyst_colors[0])
-            print('Le serveur '+ str(i+1) + ' traite la commande ' + chr(ord('A')+serveur[i][0]) + ', ' +str(serveur[i][1]))
-        else :
-            move_to(i+1,0)         # pour effacer toute ma ligne
-            erase_line_from_beg_to_curs()
-            en_couleur(lyst_colors[0])
-            print('Le serveur '+ str(i+1) + ' ne traite pas de commande')
+        for i in range(0,50):
+            if commande[i]!=0:
+                l=[chr(ord('A')+nom_commande[i]),commande[i]]
+                attente2.append(l)
+                l=[nom_commande[i],commande[i]]
+                attente.append(l)
+        lock.release()
 
-    termine = []
-    for i in range(len(pret)):
-        pret_lock[i].acquire()
-        if pret[i][0]!=0 :
-            l = [pret[i][0],pret[i][1]]
-            termine.append(l)
-        pret_lock[i].release()
-    
-    if len(termine)!=0 :
-        for i in termine :
-            nombre_commande_servis.value+=1
-            move_to(7,0)         # pour effacer toute ma ligne
-            erase_line_from_beg_to_curs()
-            en_couleur(lyst_colors[0])
-            print('Commande '+ chr(ord('A')+i[0]) + ', ' + str(i[1]) + ' est servie au client')
-    else :
-        move_to(7,0)         # pour effacer toute ma ligne
+        
+        move_to(5,0)    
+        print(CLEARELN,end='')       # pour effacer toute ma ligne
         erase_line_from_beg_to_curs()
         en_couleur(lyst_colors[0])
-        print("Aucune nouvelle commande servis")
-
-    lock.acquire()
-    #print("j'ai attraper le lock")
-    attente=[]
-    attente2=[]
-    for i in range(0,50):
-        if commande[i]!=0:
-            l=[chr(ord('A')+nom_commande[i]),commande[i]]
-            attente2.append(l)
-            l=[nom_commande[i],commande[i]]
-            attente.append(l)
-    lock.release()
-    #print("j'ai pas encore plante")
-    move_to(5,0)         # pour effacer toute ma ligne
-    erase_line_from_beg_to_curs()
-    en_couleur(lyst_colors[0])
-    print('Les commandes clients en attente : ' + str(attente2))
-    move_to(6,0)         # pour effacer toute ma ligne
-    erase_line_from_beg_to_curs()
-    en_couleur(lyst_colors[0])
-    print('Nombre de commande en attente : ' + str(len(attente)))
-    
-    move_to(8,0)         # pour effacer toute ma ligne
-    erase_line_from_beg_to_curs()
-    en_couleur(lyst_colors[0])
-    print(nombre_commande_servis.value,' ',fin_de_journee.value)
+        print( "Commande en attente : ", attente2[:])
+        move_to(6,0) 
+        print(CLEARELN,end='')          # pour effacer toute ma ligne
+        erase_line_from_beg_to_curs()
+        en_couleur(lyst_colors[0])
+        print('Nombre de commande en attente : ' + str(len(attente)))
 
 
-    if fin_de_journee.value==0 or nombre_commande_servis.value <11:
+        for i in  range(len(serveur)) :
+            if serveur[i][0]!=0:
+                move_to(i+1,0) 
+                print(CLEARELN,end='')        # pour effacer toute ma ligne
+                erase_line_from_beg_to_curs()
+                en_couleur(lyst_colors[0])
+                print('Le serveur '+ str(i+1) + ' traite la commande ' + chr(ord('A')+serveur[i][0]) + ', ' +str(serveur[i][1]))
+            else :
+                move_to(i+1,0)   
+                print(CLEARELN,end='')        # pour effacer toute ma ligne
+                erase_line_from_beg_to_curs()
+                en_couleur(lyst_colors[0])
+                print('Le serveur '+ str(i+1) + ' ne traite pas de commande')
+
+        termine = []
+        for i in range(len(pret)):
+            pret_lock[i].acquire()
+            if pret[i][0]!=0 :
+                l = [chr(ord('A') + pret[i][0]),pret[i][1]]
+                termine.append(l)
+            pret[i][0]=0
+            pret[i][1]=0
+            pret_lock[i].release()
+
+
+        if len(termine)!=0 :
+            for i in termine :
+                nombre_commande_servis.value+=1
+            move_to(7,0)   
+            print(CLEARELN,end='')        # pour effacer toute ma ligne
+            erase_line_from_beg_to_curs()
+            en_couleur(lyst_colors[0])
+            print('Commande servies au client : ', termine[:])
+        else :
+            move_to(7,0) 
+            print(CLEARELN,end='')          # pour effacer toute ma ligne
+            erase_line_from_beg_to_curs()
+            en_couleur(lyst_colors[0])
+            print("Aucune nouvelle commande servies")
+        
+
         time.sleep(1)
-        major_dHomme(serveur,pret_lock,pret)
+        if tous_le_monde_a_fini.value == 5 :
+            verif.value +=1
+
+
+
 
 
 
 
 
 if __name__ == "__main__" :
+    effacer_ecran()
     lock = mp.Semaphore(1)
     servis1 = mp.Semaphore(1)
     servis2 = mp.Semaphore(1)
     servis3 = mp.Semaphore(1)
     servis4 = mp.Semaphore(1)
+    tous_le_monde_a_fini_sema = mp.Semaphore(1)
 
     fin_de_journee=mp.Value('i',0)
     nombre_commande = mp.Value('i',49)
     nombre_commande_servis=mp.Value('i',0)
+    nombre_commande_demande=mp.Value('i',0)
+    nombre_commande_voulu=mp.Value('i',5)
+    tous_le_monde_a_fini = mp.Value('i',0)
+    verif = mp.Value('i',0)
 
     commande=mp.Array('i',50)
     nom_commande = mp.Array('i',50)
@@ -205,12 +233,15 @@ if __name__ == "__main__" :
     pret_lock = [servis1,servis2,servis3,servis4]
     pret = [servi1,servi2,servi3,servi4]
 
-    clientP = mp.Process(target=client,args=(10,))
+    clientP = mp.Process(target=client,args=(nombre_commande_voulu.value,))
     major_dHommeP = mp.Process(target=major_dHomme,args=(serveur_liste,pret_lock,pret,))
     serveur1 = mp.Process(target=serveur, args=(preparation1,servi1,servis1,))
     serveur2 = mp.Process(target=serveur, args=(preparation2,servi2,servis2,))
     serveur3 = mp.Process(target=serveur, args=(preparation3,servi3,servis3,))
     serveur4 = mp.Process(target=serveur, args=(preparation4,servi4,servis4,))
+
+
+    
 
     clientP.start()
     major_dHommeP.start()
@@ -227,12 +258,7 @@ if __name__ == "__main__" :
     serveur4.join()
 
     print("Le restaurant a finit sa journée")
-    attente2=[]
-    for i in range(0,50):
-        if commande[i]!=0:
-            l=[chr(ord('A')+nom_commande[i]),commande[i]]
-            attente2.append(l)
-    print(attente2)
+    
 
 
 # numero = preparation
