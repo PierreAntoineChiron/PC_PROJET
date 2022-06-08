@@ -86,7 +86,6 @@ def demande(nb_billes,o):
     u = billes_nb.value
     while nb_billes > billes_nb.value and billes_nb.value!=9:
         if u != billes_nb.value :
-            #print(nb_billes, " ",billes_nb.value," ",o)
             u=billes_nb.value
         x=0
     if nb_billes <= billes_nb.value :
@@ -97,7 +96,7 @@ def demande(nb_billes,o):
 
 def major_dHomme(liste_etat,nombre_bille):
     verif =0
-    while fin_de_journee.value != 4 and verif !=2:
+    while fin_de_journee.value != 4 and verif !=3:
         for i in range(4):
             move_to(i+1,0) 
             print(CLEARELN,end='')        # pour effacer toute ma ligne
@@ -112,10 +111,6 @@ def major_dHomme(liste_etat,nombre_bille):
                 print("Le process : " + str(i+1) + " a finit ses tâches")
             if x == 4 :
                 print("Le process : " + str(i+1) + " a demandé plus de billes qu'il n'y en a de base")
-        move_to(6,0) 
-        print(CLEARELN,end='')        # pour effacer toute ma ligne
-        erase_line_from_beg_to_curs()
-        print(billes_nb.value, ' ',fin_de_journee.value)
         if fin_de_journee.value == 4 :
             verif +=1
 
@@ -134,12 +129,13 @@ if __name__ == "__main__" :
     etat4 = mp.Value('i',0)
 
     nombre_bille = [10,9,2,6]
+    tours = [5,4,3,5]
     etat = [etat1,etat2,etat3,etat4]
 
-    p1 = mp.Process(target=process,args=(nombre_bille[0],1,5,etat1,))
-    p2 = mp.Process(target=process,args=(nombre_bille[1],2,4,etat2,))
-    p3 = mp.Process(target=process,args=(nombre_bille[2],3,3,etat3,))
-    p4 = mp.Process(target=process,args=(nombre_bille[3],4,1,etat4,))
+    p1 = mp.Process(target=process,args=(nombre_bille[0],1,tours[0],etat1,))
+    p2 = mp.Process(target=process,args=(nombre_bille[1],2,tours[1],etat2,))
+    p3 = mp.Process(target=process,args=(nombre_bille[2],3,tours[2],etat3,))
+    p4 = mp.Process(target=process,args=(nombre_bille[3],4,tours[3],etat4,))
     MH = mp.Process(target=major_dHomme,args=(etat,nombre_bille,))
 
     p1.start()
@@ -155,6 +151,6 @@ if __name__ == "__main__" :
     MH.join()
 
     print("fin")
-    print(etat1.value,etat2.value,etat3.value,etat4.value)
+
 
 
