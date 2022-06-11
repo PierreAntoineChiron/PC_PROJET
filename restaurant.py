@@ -55,21 +55,21 @@ cpt = 0
 cmd = 0
 
 def client(nombre_commande2):
-    while nombre_commande2!=0 :
+    while nombre_commande2!=0 : # tant que le nombre de commande voulue n'as pas été commandé il boucle
         if nombre_commande2!=0:
-            x = random.randint(1,10)
-            a = random.randint(0,25)
+            x = random.randint(1,10) # initialise le numéro de la commande
+            a = random.randint(0,25) # initialise le nom de la commande
             i=0
-            while x!=0 or a!=0 :
+            while x!=0 or a!=0 : # tant que il n'as pas trouvé une place pour mettre la commande dans la liste "commande"
                 lock.acquire()
-                if commande[i]==0 :
+                if commande[i]==0 : # si il n'y a pas de commande stockée à cette endroit
                     nombre_commande_demande.value+=1
-                    commande[i]=x
-                    nom_commande[i]=a
+                    commande[i]=x # on stocke la commande
+                    nom_commande[i]=a # on stocke le nom de la commande
                     x=0
                     a=0
                 lock.release()
-                if i==49:
+                if i==49: # si on est arrivé au bout de la liste on la reparcours du début
                     i=-1
                 i+=1
             attente = random.randint(1,2)
@@ -79,39 +79,39 @@ def client(nombre_commande2):
 
     fin_de_journee.value=1
     tous_le_monde_a_fini_sema.acquire()
-    tous_le_monde_a_fini.value+=1
+    tous_le_monde_a_fini.value+=1 
     tous_le_monde_a_fini_sema.release()
         
 
 def serveur(numero,numero2,locker):
     while fin_de_journee.value == 0 or nombre_commande_servis.value <nombre_commande_voulu.value :
-        time.sleep(1)
+        time.sleep(1) # le serveur prend une petite pause
         if fin_de_journee.value == 0 or nombre_commande_servis.value <nombre_commande_voulu.value:
             x=0
             a=0
             i=0
-            while x==0 and a==0 :
+            while x==0 and a==0 : # tant qu'il n'a pas trouvé de commande à préparer il boucle
                 lock.acquire()
-                if commande[i]!=0:
-                    x=commande[i]
-                    a=nom_commande[i]
-                    commande[i]=0
+                if commande[i]!=0: # si il trouve une commande a préparer
+                    x=commande[i] # il stocke le numéro
+                    a=nom_commande[i] # il stocke le nom
+                    commande[i]=0 # il remet à 0 dans la liste la commande qu'il a prise
                     nom_commande[i]=0
                 lock.release()
-                if i==49 :
+                if i==49 : # si on arrive au bout de la liste commande on peut la reparcourir si le nombre de commande servis est toujours inférieur au nombre de commande demandée
                     if fin_de_journee.value!=0 and nombre_commande_servis.value > nombre_commande_voulu.value-1:
                         break
                     i=-1
                 i+=1
-            numero[0]=a
-            numero[1]=x
+            numero[0]=a # on stocke dans préparationX[0] la commande voulue
+            numero[1]=x # on stocke dans préparationX[1] le nom du client
             time.sleep(random.randint(1,5))
             locker.acquire()
-            numero2[0]=a
-            numero2[1]=x
+            numero2[0]=a # on stocke dans serviX[0] la commande qui a été faite
+            numero2[1]=x # on stocke dans serviX[1] le nom du client
             locker.release()
-            numero[0]=0
-            numero[1]=0
+            numero[0]=0 # on remet a 0 preparationX[0]
+            numero[1]=0 # on remet a 0 preparationX[1]
 
     tous_le_monde_a_fini_sema.acquire()
     tous_le_monde_a_fini.value+=1
@@ -119,14 +119,12 @@ def serveur(numero,numero2,locker):
 
 
 def major_dHomme(serveur,pret_lock,pret):
-    #print("je me lance")
     while fin_de_journee.value==0 or nombre_commande_servis.value <nombre_commande_voulu.value or tous_le_monde_a_fini.value!=5 or verif.value!=1:
         lock.acquire()
-        #print("j'ai attraper le lock")
         attente=[]
         attente2=[]
 
-        for i in range(0,50):
+        for i in range(0,50): # il parcourt la list commande et stocke dans attente2 et attente toutes les commandes en attente
             if commande[i]!=0:
                 l=[chr(ord('A')+nom_commande[i]),commande[i]]
                 attente2.append(l)
@@ -134,7 +132,7 @@ def major_dHomme(serveur,pret_lock,pret):
                 attente.append(l)
         lock.release()
 
-        
+        # affichage des commandes en attente et du nombre de commande en attente
         move_to(5,0)    
         print(CLEARELN,end='')       # pour effacer toute ma ligne
         erase_line_from_beg_to_curs()
@@ -147,32 +145,32 @@ def major_dHomme(serveur,pret_lock,pret):
         print('Nombre de commande en attente : ' + str(len(attente)))
 
 
-        for i in  range(len(serveur)) :
-            if serveur[i][0]!=0:
+        for i in  range(len(serveur)) : # parcourt tous les serveurs
+            if serveur[i][0]!=0: # si preparation[0] != 0, c'est à dire si le serveur est entrain de préparer une commande
                 move_to(i+1,0) 
                 print(CLEARELN,end='')        # pour effacer toute ma ligne
                 erase_line_from_beg_to_curs()
                 en_couleur(lyst_colors[0])
-                print('Le serveur '+ str(i+1) + ' traite la commande ' + chr(ord('A')+serveur[i][0]) + ', ' +str(serveur[i][1]))
-            else :
+                print('Le serveur '+ str(i+1) + ' traite la commande ' + chr(ord('A')+serveur[i][0]) + ', ' +str(serveur[i][1])) # affichage de la commande en préparation
+            else : # le serveur ne prépare aucune commande
                 move_to(i+1,0)   
                 print(CLEARELN,end='')        # pour effacer toute ma ligne
                 erase_line_from_beg_to_curs()
-                en_couleur(lyst_colors[0])
+                en_couleur(lyst_colors[0])  
                 print('Le serveur '+ str(i+1) + ' ne traite pas de commande')
 
         termine = []
-        for i in range(len(pret)):
+        for i in range(len(pret)): # parcours tous les commandes servit
             pret_lock[i].acquire()
-            if pret[i][0]!=0 :
+            if pret[i][0]!=0 : # si servi[X] != 0 c'est à dire si le serveur X a servis une commande
                 l = [chr(ord('A') + pret[i][0]),pret[i][1]]
                 termine.append(l)
-            pret[i][0]=0
-            pret[i][1]=0
+            pret[i][0]=0 # on remet à 0 pour ne l'afficher qu'une fois
+            pret[i][1]=0 # on remet à 0 pour ne l'afficher qu'une fois
             pret_lock[i].release()
 
 
-        if len(termine)!=0 :
+        if len(termine)!=0 : # si une commande a été servit on affiche la liste et on incrémente le nombre de commande servit
             for i in termine :
                 nombre_commande_servis.value+=1
             move_to(7,0)   
@@ -180,7 +178,7 @@ def major_dHomme(serveur,pret_lock,pret):
             erase_line_from_beg_to_curs()
             en_couleur(lyst_colors[0])
             print('Commande servies au client : ', termine[:])
-        else :
+        else : # sinon on affiche qu'il n'y a eu aucune nouvelle commande de servit
             move_to(7,0) 
             print(CLEARELN,end='')          # pour effacer toute ma ligne
             erase_line_from_beg_to_curs()
@@ -260,7 +258,4 @@ if __name__ == "__main__" :
     print("Le restaurant a finit sa journée")
     
 
-
-# numero = preparation
-# numero2 = servi
 
