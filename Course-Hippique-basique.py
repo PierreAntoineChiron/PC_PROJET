@@ -64,40 +64,39 @@ def un_cheval(ma_ligne : int, keep_running) : # ma_ligne commence à 0
     global position
 
     while col < LONGEUR_COURSE and keep_running.value :
-        lock.acquire()
+        lock.acquire() # prend un jeton qui empêchera les autres process chevaux d'écrire si celui qui l'a pris n'as pas relachée le jeton
         move_to(ma_ligne+1,col)         # pour effacer toute ma ligne
         erase_line_from_beg_to_curs()
         en_couleur(lyst_colors[ma_ligne%len(lyst_colors)])
-        print('('+chr(ord('A')+ma_ligne)+'/____\V')
-        lock.release()
+        print('('+chr(ord('A')+ma_ligne)+'/____\V') # changement d'apparence du cheval
+        lock.release() # relache le jeton afin de laisser un autre process cheval écrire
 
-        tab[ma_ligne]=col
+        tab[ma_ligne]=col # stockage de l'emplacement du cheval afin d'afficher celui en tête et le dernier de la course
         col+=1
         
         temps=0.1 * random.randint(1,5)
         t_total += temps
         lock.acquire()
-        seconde[ma_ligne]=t_total
+        seconde[ma_ligne]=t_total # stockage du temps total depuis le début de la course
         lock.release()
         try : # En cas d'interruption
             time.sleep(temps)
         finally : 
             pass
-    #temps_totaux[ma_ligne] = t_total
 
 def arbitre():
     maxi =0
     mini=-1
     while maxi < LONGEUR_COURSE  and mini < LONGEUR_COURSE :
         lock.acquire()
-        lst=tab[:]
+        lst=tab[:] # récupération de la liste contenant la position des chevaux
         lock.release()
-        maxi=max(lst)
-        mini = min(lst)
-        ind_maxi=lst.index(maxi)
-        ind_mini=lst.index(mini)
+        maxi=max(lst) # récupération de la colonne du cheval gagnant
+        mini = min(lst) # récupération de la colonne du cheval perdant
+        ind_maxi=lst.index(maxi) # récupération de l'indice du cheval gagnant
+        ind_mini=lst.index(mini) # récupaération de l'indice du cheval perdant
 
-        if mini!=maxi :
+        if mini!=maxi : # si la course n'est pas finit, affichage du cheval gagant et perdant
             move_to(Nb_process+6,0)         # pour effacer toute ma ligne
             erase_line_from_beg_to_curs()
             en_couleur(lyst_colors[0])
@@ -111,16 +110,16 @@ def arbitre():
 
 
     lock.acquire()
-    sec = seconde[:]
+    sec = seconde[:] # récupération des temps totaux des chevaux
     lock.release()
-    mini = min(sec)
-    ind_mini=sec.index(mini)
+    mini = min(sec) # récupération du temps total du gagnant
+    ind_mini=sec.index(mini) # récupération du de l'indice du gagnant
     nom=[ind_mini]
-    for i in range(Nb_process):
+    for i in range(Nb_process): # vérification si il y a une exaquo
         u = sec[i]
         if u == mini and i!=ind_mini :
             nom.append(i)
-    if len(nom)!=1 :
+    if len(nom)!=1 : # affichage si exeaquo
         move_to(Nb_process+8,0)         # pour effacer toute ma ligne
         erase_line_from_beg_to_curs()
         en_couleur(lyst_colors[0])
@@ -164,7 +163,7 @@ if __name__ == "__main__" :
     predi = prediction()
 
     Nb_process = 20
-    lock = mp.Semaphore(1)
+    lock = mp.Semaphore(1) # semaphore permettant l'affichage en exclusion mutuelle
     tab=mp.Array('i', Nb_process)
     seconde=mp.Array('f', Nb_process)
 
