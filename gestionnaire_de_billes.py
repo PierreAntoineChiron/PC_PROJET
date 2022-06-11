@@ -75,16 +75,20 @@ def process(nb_billes,o,tours,etat):
 
     if tours==0:
         etat.value =3
+        protect_fin.acquire()
         fin_de_journee.value+=1
+        protect_fin.release()
     
     else :
         etat.value =4
+        protect_fin.acquire()
         fin_de_journee.value+=1
+        protect_fin.release()
 
 
 def demande(nb_billes,o):
     u = billes_nb.value
-    while nb_billes > billes_nb.value and billes_nb.value!=9:
+    while nb_billes > billes_nb.value and billes_nb.value!=billes_nb_depart.value:
         if u != billes_nb.value :
             u=billes_nb.value
         x=0
@@ -119,6 +123,7 @@ if __name__ == "__main__" :
     effacer_ecran()
     file = mp.Semaphore(1)
     billes = mp.Semaphore(9)
+    protect_fin = mp.Semaphore(1)
     billes_nb_depart = mp.Value('i',9)
     billes_nb = mp.Value('i',9)
     attente = mp.Value('i',0)
