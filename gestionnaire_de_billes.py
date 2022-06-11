@@ -56,31 +56,31 @@ def process(nb_billes,o,tours,etat):
         while tours!=0 :
             x = 0
             attente.value +=1
-            etat.value = 1
+            etat.value = 1 # mise à jour de l'état
             file.acquire()
             x = demande(nb_billes,o)
             file.release()
             attente.value -=1
-            etat.value = 2
+            etat.value = 2 # mise à jour de l'état
             if x==1 :
                 ajouter = 0
-                for i in range(nb_billes) :
+                for i in range(nb_billes) : #le process prend les billes dont il a besoin
                     billes.acquire()
-                time.sleep(2)
-                for i in range(nb_billes):
+                time.sleep(2) # simulation d'un travail
+                for i in range(nb_billes): # le process rend les billes qu'il a utilisé
                     billes.release()
                     ajouter +=1
                 billes_nb.value +=ajouter
                 tours-=1
 
     if tours==0:
-        etat.value =3
+        etat.value =3 # mise à jour de l'état
         protect_fin.acquire()
         fin_de_journee.value+=1
         protect_fin.release()
     
     else :
-        etat.value =4
+        etat.value =4 # mise à jour de l'état
         protect_fin.acquire()
         fin_de_journee.value+=1
         protect_fin.release()
@@ -88,7 +88,7 @@ def process(nb_billes,o,tours,etat):
 
 def demande(nb_billes,o):
     u = billes_nb.value
-    while nb_billes > billes_nb.value and billes_nb.value!=billes_nb_depart.value:
+    while nb_billes > billes_nb.value and billes_nb.value!=billes_nb_depart.value: # attend que le nombre de billes disponible soit suffiszant par rapport au nombre demandé
         if u != billes_nb.value :
             u=billes_nb.value
         x=0
@@ -100,13 +100,13 @@ def demande(nb_billes,o):
 
 def major_dHomme(liste_etat,nombre_bille):
     verif =0
-    while fin_de_journee.value != 4 and verif !=3:
-        for i in range(4):
+    while fin_de_journee.value != 4 and verif !=3: # boucle tant que tous les process demandeur n'ont pas finit
+        for i in range(4): # regarde les 4 process demandeur
             move_to(i+1,0) 
             print(CLEARELN,end='')        # pour effacer toute ma ligne
             erase_line_from_beg_to_curs()
             en_couleur(lyst_colors[0])
-            x = liste_etat[i].value
+            x = liste_etat[i].value # regarde la valeur de l'état du process i
             if x == 1 :
                 print('Le process '+ str(i+1) + " est dans l'état d'attente et il veut : " + str(nombre_bille[i]) +  " billes" )
             if x == 2 :
