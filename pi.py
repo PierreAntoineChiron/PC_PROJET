@@ -74,7 +74,7 @@ if __name__ == "__main__" :
     temps2 = time.time()
     print("multiprocess : ")
     print("Le temps nécessaire au calcul de pi est ",temps2-temps1)
-    print("Valeur estimée Pi par la méthode Mono−Processus : ", hit.value / nb_total_iteration)
+    print("Valeur estimée Pi par la méthode Multi−Processus : ", hit.value / nb_total_iteration)
 
 
     def frequence_de_hits_pour_n_essais(nb_iteration):

@@ -98,7 +98,7 @@ def demande(nb_billes,o):
     else :
         return 5
 
-def major_dHomme(liste_etat,nombre_bille):
+def majordome(liste_etat,nombre_bille):
     verif =0
     while fin_de_journee.value != 4 and verif !=3: # boucle tant que tous les process demandeur n'ont pas finit
         for i in range(4): # regarde les 4 process demandeur
@@ -141,7 +141,7 @@ if __name__ == "__main__" :
     p2 = mp.Process(target=process,args=(nombre_bille[1],2,tours[1],etat2,))
     p3 = mp.Process(target=process,args=(nombre_bille[2],3,tours[2],etat3,))
     p4 = mp.Process(target=process,args=(nombre_bille[3],4,tours[3],etat4,))
-    MH = mp.Process(target=major_dHomme,args=(etat,nombre_bille,))
+    MH = mp.Process(target=majordome,args=(etat,nombre_bille,))
 
     p1.start()
     p2.start()
