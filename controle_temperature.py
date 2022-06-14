@@ -1,7 +1,7 @@
 import multiprocessing as mp
 import time,random
 
-def tache_controleur(verrou,go_chauffage,go_pompe,seuil_T,seuil_P):
+def tache_controleur(verrou,go_chauffage,go_pompe,seuil_T,seuil_P): #Commandes commes dan le pseudo_code
     verrou.acquire()
     P = mem_xx[0]
     T = mem_xx[1]
@@ -23,7 +23,7 @@ def tache_controleur(verrou,go_chauffage,go_pompe,seuil_T,seuil_P):
             go_pompe = False
     return go_pompe,go_chauffage
 
-def tache_chauffage(go_chauffage,Vt):
+def tache_chauffage(go_chauffage,Vt): #Selon l'action demandée, change la varible changeant la pression
     if go_chauffage:
         print('Mettre le chauffage en route')
         Vt += random.uniform(0,2)
@@ -34,7 +34,7 @@ def tache_chauffage(go_chauffage,Vt):
             Vt -= random.uniform(0,2)
     return Vt
 
-def tache_pompe(go_pompe,Vp):
+def tache_pompe(go_pompe,Vp):       #Selon l'action demandée, change la varible changeant la pression
     if go_pompe:
         print('Il faut pomper monsieur')
         Vp -= random.uniform(0,2)
@@ -45,20 +45,20 @@ def tache_pompe(go_pompe,Vp):
             Vp += random.uniform(0,2)
     return Vp
 
-def temperature(verrou,Vt):
-    T = Vt*100 - 273
+def temperature(verrou,Vt): #Calcule la température
+    T = Vt*100 - 273    #Passage de Kelvin à Celsius
     verrou.acquire()
     mem_xx[1] = T
     verrou.release()
 
 
-def pression(verrou,Vp):
+def pression(verrou,Vp):    #Calcule la pression
     P = Vp*100
     verrou.acquire()
     mem_xx[0] = P
     verrou.release()
 
-def tache_ecran(verrou):
+def tache_ecran(verrou):    #Affichage de la phrase
     verrou.acquire()
     T = mem_xx[1]
     P = mem_xx[0]
@@ -77,14 +77,11 @@ if __name__ == '__main__':
     Vt = 2.73
     Vp = 1.30
 
-    while True:
+    while True:     #Relance toutes les fonctions dans une boucle de 2 secondes
         temperature(verrou,Vt)
-        time.sleep(0.5)
         pression(verrou,Vp)
-        time.sleep(0.5)
         go_pompe,go_chauffage = tache_controleur(verrou,go_chauffage,go_pompe,seuil_T,seuil_P)
-        time.sleep(0.5)
         tache_ecran(verrou)
         Vt = tache_chauffage(go_chauffage,Vt)
         Vp = tache_pompe(go_pompe,Vp)
-        time.sleep(0.5)
+        time.sleep(1.5)
